@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wingsfree | Live Free with Wings Freedom</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            500: '#8b5cf6', // Violet
+                            600: '#7c3aed',
+                            900: '#4c1d95',
+                        },
+                        accent: '#fbbf24', // Amber
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 7s ease-in-out infinite 1s',
+                        'chat-open': 'chatOpen 0.3s ease-out forwards',
+                        'chat-close': 'chatClose 0.3s ease-in forwards',
+                        'message-pop': 'messagePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'blob-move': 'blobMove 20s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        chatOpen: {
+                            '0%': { opacity: '0', transform: 'translateY(20px) scale(0.95)' },
+                            '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+                        },
+                        chatClose: {
+                            '0%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+                            '100%': { opacity: '0', transform: 'translateY(20px) scale(0.95)' },
+                        },
+                        messagePop: {
+                            '0%': { opacity: '0', transform: 'scale(0.8)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                        blobMove: {
+                            '0%': { transform: 'translate(0, 0) rotate(0deg)' },
+                            '33%': { transform: 'translate(30px, -50px) rotate(120deg)' },
+                            '66%': { transform: 'translate(-20px, 20px) rotate(240deg)' },
+                            '100%': { transform: 'translate(0, 0) rotate(360deg)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            scroll-behavior: smooth;
+            background-color: #fafafa;
+        }
+
+        /* Hide Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c4b5fd;
+        }
+
+        /* Parallax Background Wrapper */
+        .parallax-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .parallax-shape {
+            position: absolute;
+            opacity: 0.15;
+            transition: transform 0.1s linear;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        /* Chatbot Specifics */
+        .chat-bubble {
+            position: relative;
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        
+        /* Bot Message Styling - High Contrast Dark Text */
+        .chat-bubble.bot {
+            background: #ffffff;
+            color: #111827; /* Tailwind Gray-900 - Almost Black for readability */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-bottom-left-radius: 2px;
+            border: 1px solid #e5e7eb;
+        }
+
+        /* User Message Styling */
+        .chat-bubble.user {
+            background: #7c3aed; /* Brand Purple */
+            color: #ffffff; /* White text */
+            border-bottom-right-radius: 2px;
+            margin-left: auto;
+        }
+
+        .typing-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #374151; /* Dark gray dots */
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="text-gray-700 antialiased">
+
+    <!-- Parallax Background -->
+    <div class="parallax-wrapper" id="parallax-container">
+        <!-- Large blurred blobs -->
+        <div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-purple-200 rounded-full blur-[80px] opacity-30 animate-blob-move"></div>
+        <div class="absolute bottom-[10%] right-[-10%] w-[60vw] h-[60vw] bg-yellow-200 rounded-full blur-[80px] opacity-30 animate-blob-move" style="animation-duration: 25s;"></div>
+        
+        <!-- Moving SVG Shapes -->
+        <i class="fa-solid fa-droplet text-purple-300 parallax-shape text-4xl top-20 left-[10%]" data-speed="0.05"></i>
+        <i class="fa-solid fa-feather text-purple-300 parallax-shape text-6xl top-40 right-[15%]" data-speed="0.08"></i>
+        <i class="fa-solid fa-leaf text-yellow-300 parallax-shape text-5xl bottom-40 left-[20%]" data-speed="0.03"></i>
+        <i class="fa-solid fa-star text-purple-200 parallax-shape text-3xl top-[60%] right-[5%]" data-speed="0.06"></i>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-40 glass-nav transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <div class="bg-brand-600 text-white w-10 h-10 rounded-full flex items-center justify-center">
+                        <i class="fa-solid fa-feather-pointed"></i>
+                    </div>
+                    <span class="font-serif font-bold text-2xl text-brand-900 tracking-tight">Wingsfree</span>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex space-x-8 items-center">
+                    <a href="#features" class="text-gray-600 hover:text-brand-600 font-medium transition">Features</a>
+                    <a href="#flow-guide" class="text-gray-600 hover:text-brand-600 font-medium transition">Size Guide</a>
+                    <a href="#testimonials" class="text-gray-600 hover:text-brand-600 font-medium transition">Reviews</a>
+                    <a href="#contact" class="px-6 py-2.5 bg-brand-600 text-white rounded-full font-semibold shadow-lg shadow-brand-500/30 hover:bg-brand-700 transition transform hover:-translate-y-0.5">Shop Now</a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-600 hover:text-brand-600 focus:outline-none">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu Panel -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 absolute w-full left-0">
+            <div class="px-4 pt-2 pb-6 space-y-2 shadow-lg">
+                <a href="#features" class="block px-3 py-3 text-base font-medium text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-md">Features</a>
+                <a href="#flow-guide" class="block px-3 py-3 text-base font-medium text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-md">Size Guide</a>
+                <a href="#contact" class="block px-3 py-3 text-base font-medium text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-md">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+                
+                <!-- Text Content -->
+                <div class="text-center lg:text-left reveal-on-scroll">
+                    <div class="inline-block px-4 py-1.5 bg-brand-100 text-brand-700 rounded-full text-sm font-semibold mb-6 tracking-wide uppercase">
+                        Live Free with Wings Freedom
+                    </div>
+                    <h1 class="font-serif text-5xl lg:text-7xl font-bold text-gray-900 leading-[1.1] mb-6">
+                        Protection that <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-purple-400">flows with you.</span>
+                    </h1>
+                    <p class="text-lg text-gray-600 mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+                        Wingsfree® sanitary pads combine crisscross technology with premium softness. Experience up to 12 hours of protection and 100% odor control.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <button class="px-8 py-4 bg-brand-600 text-white rounded-full font-bold text-lg shadow-xl shadow-brand-500/30 hover:bg-brand-700 transition transform hover:scale-105">
+                            Shop Now <span class="text-sm ml-2 opacity-80">From ₹38</span>
+                        </button>
+                        <button class="px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-full font-bold text-lg hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                            <i class="fa-regular fa-circle-play text-brand-600"></i> Watch Ad
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Image -->
+                <div class="relative lg:h-[600px] flex items-center justify-center reveal-on-scroll delay-200">
+                    <!-- Decorative back circle -->
+                    <div class="absolute w-[400px] h-[400px] bg-gradient-to-tr from-purple-100 to-yellow-100 rounded-full blur-3xl opacity-60 animate-pulse"></div>
+                    
+                    <!-- Image -->
+                    <div class="relative z-10 w-3/4 lg:w-full max-w-md animate-float">
+                        <img src="https://z-cdn-media.chatglm.cn/files/fc3ddac1-01de-4bb2-a06b-7245389bde79.png?auth_key=1869274384-541e731d747140cdb26bb085ea5e374b-0-325acbabb238250ffb9eb04b5a898d0e" 
+                             alt="Wingsfree Sanitary Pad" 
+                             class="w-full h-auto drop-shadow-2xl rounded-xl transform rotate-[-5deg] hover:rotate-0 transition duration-500">
+                        
+                        <!-- Floating Badge -->
+                        <div class="absolute -right-6 top-10 bg-white p-4 rounded-2xl shadow-lg animate-float-delayed hidden md:block">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-green-100 text-green-600 w-10 h-10 rounded-full flex items-center justify-center">
+                                    <i class="fa-solid fa-shield-virus"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase">Leak Proof</p>
+                                    <p class="font-bold text-gray-900">12 Hours</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <section class="py-10 bg-white/50 backdrop-blur-sm border-y border-gray-100">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center reveal-on-scroll">
+                <div>
+                    <div class="text-3xl lg:text-4xl font-bold text-brand-600 mb-1">12h</div>
+                    <div class="text-sm text-gray-500 font-medium">Protection</div>
+                </div>
+                <div>
+                    <div class="text-3xl lg:text-4xl font-bold text-brand-600 mb-1">100%</div>
+                    <div class="text-sm text-gray-500 font-medium">Odour Control</div>
+                </div>
+                <div>
+                    <div class="text-3xl lg:text-4xl font-bold text-brand-600 mb-1">Cruelty</div>
+                    <div class="text-sm text-gray-500 font-medium">Free Product</div>
+                </div>
+                <div>
+                    <div class="text-3xl lg:text-4xl font-bold text-brand-600 mb-1">Gynac</div>
+                    <div class="text-sm text-gray-500 font-medium">Tested Safe</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEW FEATURE: Flow Guide -->
+    <section id="flow-guide" class="py-20 relative overflow-hidden">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16 reveal-on-scroll">
+                <h2 class="font-serif text-4xl font-bold text-gray-900 mb-4">Select Your Flow</h2>
+                <p class="text-gray-500 max-w-2xl mx-auto">Not sure which size to pick? Our Wingsfree range is designed to match your body's natural cycle.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <!-- Regular Flow -->
+                <div class="group bg-white rounded-3xl p-8 border border-gray-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 reveal-on-scroll cursor-pointer relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-green-300"></div>
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-6 text-2xl group-hover:scale-110 transition">
+                        <i class="fa-solid fa-water"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Regular Flow</h3>
+                    <p class="text-gray-500 text-sm mb-6">Best for light to moderate days. Super thin and flexible for everyday comfort.</p>
+                    <div class="flex justify-between items-center border-t border-gray-100 pt-4">
+                        <span class="font-bold text-brand-600">240mm Size</span>
+                        <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs">Pad L</span>
+                    </div>
+                </div>
+
+                <!-- Heavy Flow -->
+                <div class="group bg-white rounded-3xl p-8 border border-brand-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-4 scale-105 relative overflow-hidden ring-2 ring-brand-100">
+                    <div class="absolute top-0 right-0 bg-brand-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
+                    <div class="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 mb-6 text-2xl group-hover:scale-110 transition">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Heavy Flow</h3>
+                    <p class="text-gray-500 text-sm mb-6">Enhanced absorption for heavier days. Wings for extra security.</p>
+                    <div class="flex justify-between items-center border-t border-gray-100 pt-4">
+                        <span class="font-bold text-brand-600">XL Size</span>
+                        <span class="bg-brand-50 text-brand-600 px-3 py-1 rounded-full text-xs">Max Protection</span>
+                    </div>
+                </div>
+
+                <!-- Overnight -->
+                <div class="group bg-white rounded-3xl p-8 border border-gray-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 reveal-on-scroll delay-100 cursor-pointer relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-purple-400 to-indigo-300"></div>
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-6 text-2xl group-hover:scale-110 transition">
+                        <i class="fa-solid fa-moon"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Overnight</h3>
+                    <p class="text-gray-500 text-sm mb-6">Extra long back protection for a worry-free sleep.</p>
+                    <div class="flex justify-between items-center border-t border-gray-100 pt-4">
+                        <span class="font-bold text-brand-600">280mm+ Size</span>
+                        <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs">Night Care</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section id="features" class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div class="order-2 lg:order-1 reveal-on-scroll">
+                    <!-- REPLACED BROKEN IMAGE WITH RELIABLE UNSPLASH ID -->
+                    <img src="https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?q=80&w=1000&auto=format&fit=crop" 
+                         alt="Soft Cotton Texture" 
+                         class="rounded-3xl shadow-2xl w-full object-cover h-[400px]">
+                </div>
+                <div class="order-1 lg:order-2 reveal-on-scroll">
+                    <h2 class="font-serif text-4xl font-bold text-gray-900 mb-6">Innovation in Comfort</h2>
+                    <div class="space-y-6">
+                        <div class="flex gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-grid-2 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900">Crisscross Top Sheet</h4>
+                                <p class="text-gray-500 mt-1 text-sm">Unique design locks fluid instantly to prevent side leakage.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-wind text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900">Breathable Material</h4>
+                                <p class="text-gray-500 mt-1 text-sm">Allows air circulation to keep you dry and irritation-free.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-feather text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900">Ultra Soft Wings</h4>
+                                <p class="text-gray-500 mt-1 text-sm">Secure wrap-around fit that moves with your body.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="py-20 bg-brand-900 text-white relative overflow-hidden">
+        <!-- Background Decoration -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
+
+        <div class="container mx-auto px-4 relative z-10">
+            <h2 class="font-serif text-4xl font-bold text-center mb-16">Trusted by Women</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Review 1 -->
+                <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/10 reveal-on-scroll">
+                    <div class="flex text-yellow-400 mb-4">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="text-gray-200 italic mb-6">"I've tried many brands, but Wingsfree XL is the only one that gives me confidence during heavy days. No stains, no smell!"</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-400 rounded-full flex items-center justify-center font-bold">P</div>
+                        <div>
+                            <h5 class="font-bold text-sm">Priya S.</h5>
+                            <p class="text-xs text-gray-400">Verified Buyer</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Review 2 -->
+                <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/10 reveal-on-scroll delay-100">
+                    <div class="flex text-yellow-400 mb-4">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i>
+                    </div>
+                    <p class="text-gray-200 italic mb-6">"The softness is unmatched. I forget I'm wearing one. The price point is also very affordable for students."</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center font-bold">A</div>
+                        <div>
+                            <h5 class="font-bold text-sm">Ananya R.</h5>
+                            <p class="text-xs text-gray-400">Verified Buyer</p>
+                        </div>
+                    </div>
+                </div>
+                 <!-- Review 3 -->
+                 <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/10 reveal-on-scroll delay-200">
+                    <div class="flex text-yellow-400 mb-4">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="text-gray-200 italic mb-6">"The wings stay in place perfectly. Highly recommended for active women or gym goers."</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-400 rounded-full flex items-center justify-center font-bold">K</div>
+                        <div>
+                            <h5 class="font-bold text-sm">Kavitha M.</h5>
+                            <p class="text-xs text-gray-400">Verified Buyer</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-gray-50 pt-16 pb-8 border-t border-gray-200">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+                <div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="bg-brand-600 text-white w-8 h-8 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-feather-pointed text-sm"></i>
+                        </div>
+                        <span class="font-serif font-bold text-xl text-gray-900">Wingsfree</span>
+                    </div>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Wingsfree® offers premium menstrual protection products manufactured by Nectar BioPharma Pvt Ltd.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li><a href="#" class="hover:text-brand-600">About Us</a></li>
+                        <li><a href="#" class="hover:text-brand-600">Products</a></li>
+                        <li><a href="#" class="hover:text-brand-600">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-brand-600">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-4">Contact Us</h4>
+                    <ul class="space-y-3 text-sm text-gray-600">
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-location-dot text-brand-600 mt-1"></i>
+                            <span>Coimbatore, Vellakinar<br>Tamil Nadu, India</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="fa-solid fa-phone text-brand-600"></i>
+                            <span>9787874863</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="fa-solid fa-envelope text-brand-600"></i>
+                            <span>support@wingsfree.com</span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-4">Newsletter</h4>
+                    <div class="flex gap-2">
+                        <input type="email" placeholder="Email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-brand-500 text-sm">
+                        <button class="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 pt-8 text-center text-sm text-gray-400">
+                <p>&copy; 2023 Wingsfree. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chatbot Widget -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end" id="chatbot-container">
+        
+        <!-- Chat Window -->
+        <div id="chat-window" class="hidden w-[90%] sm:w-80 h-[450px] bg-white rounded-2xl shadow-2xl mb-4 overflow-hidden flex flex-col animate-chat-close origin-bottom-right border border-gray-100">
+            <!-- Header -->
+            <div class="bg-brand-600 p-4 flex justify-between items-center text-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span class="font-bold">WingsFree Assistant</span>
+                </div>
+                <button id="close-chat" class="hover:bg-brand-500 w-8 h-8 rounded-full flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col gap-3">
+                <!-- Initial Bot Message -->
+                <div class="chat-bubble bot self-start max-w-[85%] animate-message-pop">
+                    Hi there! 👋 I'm your WingsFree assistant. How can I help you today?
+                </div>
+            </div>
+
+            <!-- FAQ Options -->
+            <div class="p-4 bg-white border-t border-gray-100">
+                <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Frequently Asked</p>
+                <div class="flex flex-wrap gap-2">
+                    <button class="chat-option px-3 py-1.5 bg-brand-50 text-brand-700 text-xs font-medium rounded-full hover:bg-brand-100 transition">How to use?</button>
+                    <button class="chat-option px-3 py-1.5 bg-brand-50 text-brand-700 text-xs font-medium rounded-full hover:bg-brand-100 transition">Is it organic?</button>
+                    <button class="chat-option px-3 py-1.5 bg-brand-50 text-brand-700 text-xs font-medium rounded-full hover:bg-brand-100 transition">Pack Sizes</button>
+                    <button class="chat-option px-3 py-1.5 bg-brand-50 text-brand-700 text-xs font-medium rounded-full hover:bg-brand-100 transition">Contact Us</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toggle Button -->
+        <button id="chat-toggle-btn" class="w-14 h-14 bg-brand-600 text-white rounded-full shadow-lg shadow-brand-500/40 flex items-center justify-center text-2xl hover:scale-110 transition duration-300 group">
+            <i class="fa-solid fa-comments group-hover:rotate-12 transition"></i>
+        </button>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // --- 1. Parallax & Scroll Animations ---
+        
+        // Scroll Reveal Observer
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal-on-scroll').forEach(el => {
+            // Initial state for CSS transition
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.8s cubic-bezier(0.5, 0, 0, 1)';
+            observer.observe(el);
+        });
+
+        // Enhanced Parallax Logic
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            
+            // Move background shapes
+            document.querySelectorAll('.parallax-shape').forEach(shape => {
+                const speed = shape.getAttribute('data-speed');
+                // Use translate3d for GPU acceleration
+                shape.style.transform = `translate3d(0, ${scrollY * speed * 50}px, 0)`;
+            });
+
+            // Navbar Glass Effect
+            const nav = document.getElementById('navbar');
+            if (scrollY > 20) {
+                nav.classList.add('shadow-sm');
+                nav.style.background = 'rgba(255, 255, 255, 0.95)';
+            } else {
+                nav.classList.remove('shadow-sm');
+                nav.style.background = 'rgba(255, 255, 255, 0.85)';
+            }
+        });
+
+        // --- 2. Mobile Menu ---
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // --- 3. Chatbot Logic ---
+        const chatToggle = document.getElementById('chat-toggle-btn');
+        const chatWindow = document.getElementById('chat-window');
+        const closeChat = document.getElementById('close-chat');
+        const messagesContainer = document.getElementById('chat-messages');
+        const chatOptions = document.querySelectorAll('.chat-option');
+
+        let isChatOpen = false;
+
+        function toggleChat() {
+            isChatOpen = !isChatOpen;
+            if (isChatOpen) {
+                chatWindow.classList.remove('hidden');
+                chatWindow.classList.remove('animate-chat-close');
+                chatWindow.classList.add('animate-chat-open');
+                chatToggle.classList.add('scale-0'); // Hide main button
+            } else {
+                chatWindow.classList.remove('animate-chat-open');
+                chatWindow.classList.add('animate-chat-close');
+                chatToggle.classList.remove('scale-0');
+                // Wait for animation to finish before hiding display
+                setTimeout(() => {
+                    if(!isChatOpen) chatWindow.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        chatToggle.addEventListener('click', toggleChat);
+        closeChat.addEventListener('click', toggleChat);
+
+        // Typing Effect Function
+        function addBotMessage(text) {
+            // Add typing indicator
+            const typingId = 'typing-' + Date.now();
+            const typingHTML = `
+                <div id="${typingId}" class="chat-bubble bot self-start max-w-[85%] animate-message-pop">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>`;
+            messagesContainer.insertAdjacentHTML('beforeend', typingHTML);
+            scrollToBottom();
+
+            // Simulate delay then replace with text
+            setTimeout(() => {
+                const typingEl = document.getElementById(typingId);
+                typingEl.remove();
+                const msgHTML = `
+                    <div class="chat-bubble bot self-start max-w-[85%] animate-message-pop">
+                        ${text}
+                    </div>`;
+                messagesContainer.insertAdjacentHTML('beforeend', msgHTML);
+                scrollToBottom();
+            }, 1200);
+        }
+
+        function addUserMessage(text) {
+            const msgHTML = `
+                <div class="chat-bubble user animate-message-pop">
+                    ${text}
+                </div>`;
+            messagesContainer.insertAdjacentHTML('beforeend', msgHTML);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // FAQ Logic
+        const faqResponses = {
+            'How to use?': 'Simply unwrap the pad, remove the adhesive backing strip, and press it firmly onto your underwear. Fold the wings around the gusset for extra security.',
+            'Is it organic?': 'Wingsfree pads are made with premium, soft, skin-friendly materials designed to prevent irritation. They are dermatologically tested.',
+            'Pack Sizes': 'We are available in packs of 8 pads (Regular/L/XL) and larger value packs. Prices start from ₹38.',
+            'Contact Us': 'You can reach us at 9787874863 or visit our office in Coimbatore, Vellakinar.'
+        };
+
+        chatOptions.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const question = btn.innerText;
+                addUserMessage(question);
+                const response = faqResponses[question];
+                addBotMessage(response);
+            });
+        });
+
+    </script>
+</body>
+</html>
